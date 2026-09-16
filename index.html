@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โมเดล 3D กังหันลม - แรงและการเปลี่ยนแปลงการเคลื่อนที่ (3D Windmill Model)</title>
+    <title>โมเดล 3D กังหันลม - 3D Windmill Model</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -18,196 +18,221 @@
         * { font-family: 'Prompt', sans-serif; }
         body { margin: 0; overflow: hidden; }
         #canvas { display: block; }
-        .info-panel {
-            transition: all 0.3s ease;
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
         }
-        .part-button {
+        .control-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
             transition: all 0.3s ease;
+            color: white;
         }
-        .part-button:hover {
+        .control-btn:hover {
             transform: scale(1.05);
         }
-        .part-button.active {
-            background-color: #059669 !important;
-            box-shadow: 0 0 15px rgba(5, 150, 105, 0.7);
+        .part-panel {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 12px;
+            z-index: 100;
+            max-width: 250px;
+        }
+        .part-btn {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: rgba(100, 150, 200, 0.6);
+            border: 2px solid transparent;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .part-btn:hover {
+            background: rgba(100, 150, 200, 0.8);
+            border-color: #00aaff;
+        }
+        .part-btn.active {
+            background: rgba(0, 170, 255, 0.9);
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.7);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900 text-white">
+<body class="bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
 
     <!-- Canvas for 3D -->
     <canvas id="canvas"></canvas>
 
-    <!-- Header Info -->
-    <div class="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 to-transparent p-6 text-center">
-        <h1 class="text-4xl font-bold mb-2">🌬️ โมเดล 3D กังหันลม (3D Windmill Model) 🌬️</h1>
-        <p class="text-blue-200 text-sm">เรื่องแรงและการเปลี่ยนแปลงการเคลื่อนที่ของวัตถุ | Forces and Motion Physics</p>
+    <!-- Part Selection Panel (Right Side) -->
+    <div class="part-panel">
+        <p style="font-size: 11px; color: #aaa; margin: 0 0 10px 0;">📋 เลือกชิ้นส่วน</p>
+        <button onclick="selectPart('blade')" class="part-btn">🌀 ใบกังหัน</button>
+        <button onclick="selectPart('hub')" class="part-btn">🔵 แกนกลาง</button>
+        <button onclick="selectPart('nacelle')" class="part-btn">📦 หัวกังหัน</button>
+        <button onclick="selectPart('tower')" class="part-btn">🏗️ หอสูง</button>
+        <button onclick="selectPart('generator')" class="part-btn">⚙️ เครื่องกำเนิด</button>
     </div>
 
-    <!-- Control Panel -->
-    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-        <div class="max-w-6xl mx-auto">
-            <!-- Part Selection -->
-            <div class="mb-4">
-                <p class="text-sm text-blue-300 mb-2">📋 คลิกที่ชิ้นส่วนเพื่อเรียนรู้ | Click Parts to Learn</p>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <button onclick="selectPart('blade')" class="part-button bg-pink-600 hover:bg-pink-700 px-3 py-2 rounded-lg text-xs font-semibold transition">
-                        🌀 ใบกังหัน (Blade)
-                    </button>
-                    <button onclick="selectPart('hub')" class="part-button bg-yellow-600 hover:bg-yellow-700 px-3 py-2 rounded-lg text-xs font-semibold transition">
-                        🔵 แกนกลาง (Hub)
-                    </button>
-                    <button onclick="selectPart('tower')" class="part-button bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-xs font-semibold transition">
-                        🏗️ หอสูง (Tower)
-                    </button>
-                    <button onclick="selectPart('generator')" class="part-button bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg text-xs font-semibold transition">
-                        ⚙️ เครื่องกำเนิด (Generator)
-                    </button>
-                </div>
-            </div>
-
-            <!-- Control Buttons -->
-            <div class="flex gap-2 flex-wrap">
-                <button onclick="toggleRotation()" id="rotateBtn" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-full font-semibold text-sm transition shadow-lg">
-                    ▶️ หมุนกังหัน (Start Rotation)
-                </button>
-                <button onclick="toggleExplode()" id="explodeBtn" class="bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded-full font-semibold text-sm transition shadow-lg">
-                    💥 ถอดประกอบ (Explode)
-                </button>
-                <button onclick="toggleDynamics()" id="dynamicsBtn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full font-semibold text-sm transition shadow-lg">
-                    🎯 แสดงแรง (Show Forces)
-                </button>
-                <button onclick="resetView()" class="bg-slate-600 hover:bg-slate-700 px-4 py-2 rounded-full font-semibold text-sm transition shadow-lg">
-                    🔄 รีเซ็ต (Reset)
-                </button>
-                <button onclick="speakCurrentInfo()" id="speakBtn" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-full font-semibold text-sm transition shadow-lg">
-                    🔊 ฟังเสียง (Listen)
-                </button>
-            </div>
-
-            <!-- Info Display -->
-            <div class="info-panel bg-black/50 border-2 border-blue-500 rounded-xl p-4 mt-4 shadow-xl">
-                <h2 id="partTitle" class="text-xl font-bold text-blue-300 mb-2">ยินดีต้อนรับ! 🌬️ Welcome!</h2>
-                <p id="partDesc" class="text-sm text-gray-300 leading-relaxed">
-                    กังหันลมใช้แรงลมในการหมุน การออกแบบใบกังหันนั้นพิจารณาจากหลักการของแรงยกและแรงลากในด้านวิศวกรรมอากาศพลศาสตร์ 
-                    คลิกที่ปุ่มชิ้นส่วนข้างบนเพื่อเรียนรู้เพิ่มเติม<br>
-                    <br>
-                    The windmill uses wind force to rotate. The blade design considers aerodynamic lift and drag forces. Click the parts above to learn more!
-                </p>
-                <p id="speedInfo" class="text-xs text-yellow-400 mt-2">⚡ ความเร็วในการหมุน: 0 RPM</p>
-            </div>
-        </div>
+    <!-- Control Panel (Bottom) -->
+    <div class="control-panel">
+        <button onclick="toggleRotation()" id="rotateBtn" class="control-btn" style="background: #10b981;">▶️ หมุน</button>
+        <button onclick="toggleExplode()" id="explodeBtn" class="control-btn" style="background: #f59e0b;">💥 ถอด</button>
+        <button onclick="toggleDynamics()" id="dynamicsBtn" class="control-btn" style="background: #3b82f6;">🎯 แรง</button>
+        <button onclick="speakCurrentInfo()" class="control-btn" style="background: #8b5cf6;">🔊 ฟัง</button>
+        <button onclick="resetView()" class="control-btn" style="background: #6b7280;">🔄 รีเซ็ต</button>
     </div>
 
     <script>
-        // ============ Three.js Scene Setup ============
+        // ============ THREE.JS SCENE SETUP ============
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a1428);
-        scene.fog = new THREE.Fog(0x0a1428, 1000, 1500);
+        scene.fog = new THREE.Fog(0x0a1428, 500, 1000);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-        camera.position.set(0, 8, 15);
-        camera.lookAt(0, 0, 0);
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 8, 18);
+        camera.lookAt(0, 5, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // ============ Lighting ============
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        // ============ LIGHTING ============
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 20, 10);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        directionalLight.position.set(15, 25, 15);
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.far = 100;
+        directionalLight.shadow.camera.left = -30;
+        directionalLight.shadow.camera.right = 30;
+        directionalLight.shadow.camera.top = 30;
+        directionalLight.shadow.camera.bottom = -30;
         scene.add(directionalLight);
 
-        const pointLight = new THREE.PointLight(0x00aaff, 0.5);
-        pointLight.position.set(-10, 15, 5);
+        const pointLight = new THREE.PointLight(0x00aaff, 0.4);
+        pointLight.position.set(-15, 15, 10);
         scene.add(pointLight);
 
-        // ============ Wind Particles ============
-        const particleGeometry = new THREE.BufferGeometry();
-        const particleCount = 200;
-        const particles = new Float32Array(particleCount * 3);
+        // ============ GROUND ============
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x1a3a3a, metalness: 0.1, roughness: 0.9 });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.5;
+        ground.receiveShadow = true;
+        scene.add(ground);
 
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            particles[i] = Math.random() * 40 - 20;
-            particles[i + 1] = Math.random() * 30 - 5;
-            particles[i + 2] = Math.random() * 40 - 20;
-        }
-
-        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particles, 3));
-        const particleMaterial = new THREE.PointsMaterial({ color: 0x00aaff, size: 0.1, transparent: true, opacity: 0.3 });
-        const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-        scene.add(particleSystem);
-
-        // ============ Windmill Components ============
+        // ============ WINDMILL COMPONENTS ============
         const windmillGroup = new THREE.Group();
         scene.add(windmillGroup);
 
-        // Tower (หอสูง)
-        const towerGeometry = new THREE.CylinderGeometry(0.8, 1, 12, 32);
-        const towerMaterial = new THREE.MeshStandardMaterial({ color: 0x4a5568, metalness: 0.3, roughness: 0.7 });
+        // === TOWER (หอสูง) ===
+        const towerGeometry = new THREE.CylinderGeometry(1.2, 1.4, 8, 32);
+        const towerMaterial = new THREE.MeshStandardMaterial({
+            color: 0xcccccc,
+            metalness: 0.3,
+            roughness: 0.6,
+            map: createTexturePattern()
+        });
         const tower = new THREE.Mesh(towerGeometry, towerMaterial);
         tower.castShadow = true;
         tower.receiveShadow = true;
-        tower.position.y = -1;
+        tower.position.y = 3.5;
         tower.userData.name = 'tower';
+        tower.userData.originalPos = { x: tower.position.x, y: tower.position.y, z: tower.position.z };
         windmillGroup.add(tower);
 
-        // Base Platform
-        const baseGeometry = new THREE.CylinderGeometry(2, 2.5, 1, 32);
-        const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3748, metalness: 0.4, roughness: 0.6 });
-        const base = new THREE.Mesh(baseGeometry, baseMaterial);
-        base.castShadow = true;
-        base.receiveShadow = true;
-        base.position.y = -7.5;
-        windmillGroup.add(base);
+        // Tower Red Band
+        const bandGeometry = new THREE.CylinderGeometry(1.25, 1.25, 0.8, 32);
+        const bandMaterial = new THREE.MeshStandardMaterial({ color: 0xcc3333, metalness: 0.2, roughness: 0.7 });
+        const band = new THREE.Mesh(bandGeometry, bandMaterial);
+        band.position.y = 1.5;
+        band.castShadow = true;
+        tower.add(band);
 
-        // Nacelle Group (ส่วนหัวกังหัน)
+        // === NACELLE GROUP (หัวกังหัน) ===
         const nacelleGroup = new THREE.Group();
-        nacelleGroup.position.y = 6;
+        nacelleGroup.position.y = 7.5;
+        nacelleGroup.userData.name = 'nacelle';
         windmillGroup.add(nacelleGroup);
 
         // Nacelle Body
-        const nacelleGeometry = new THREE.BoxGeometry(2, 1.5, 3);
-        const nacelleMaterial = new THREE.MeshStandardMaterial({ color: 0xfbbc04, metalness: 0.5, roughness: 0.5 });
-        const nacelle = new THREE.Mesh(nacelleGeometry, nacelleMaterial);
-        nacelle.castShadow = true;
-        nacelle.receiveShadow = true;
-        nacelleGroup.add(nacelle);
+        const nacelleGeometry = new THREE.BoxGeometry(2.5, 2, 4.5);
+        const nacelleMaterial = new THREE.MeshStandardMaterial({
+            color: 0xeeeeee,
+            metalness: 0.4,
+            roughness: 0.5
+        });
+        const nacelleBody = new THREE.Mesh(nacelleGeometry, nacelleMaterial);
+        nacelleBody.castShadow = true;
+        nacelleBody.receiveShadow = true;
+        nacelleGroup.add(nacelleBody);
 
-        // Rotor Hub (แกนกลาง)
-        const hubGeometry = new THREE.CylinderGeometry(1.2, 1.2, 1, 32);
-        const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xf4d03f, metalness: 0.6, roughness: 0.4 });
+        // Solar Panel
+        const panelGeometry = new THREE.BoxGeometry(1.5, 0.8, 1.2);
+        const panelMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.3 });
+        const solarPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+        solarPanel.position.set(-0.8, 0.7, -1.8);
+        solarPanel.castShadow = true;
+        nacelleGroup.add(solarPanel);
+
+        // === ROTOR HUB (แกนกลาง) ===
+        const hubGeometry = new THREE.SphereGeometry(0.9, 32, 32);
+        const hubMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf4d03f,
+            metalness: 0.7,
+            roughness: 0.3
+        });
         const hub = new THREE.Mesh(hubGeometry, hubMaterial);
+        hub.scale.set(1, 1.2, 1);
         hub.castShadow = true;
         hub.receiveShadow = true;
-        hub.rotation.z = Math.PI / 2;
-        hub.position.z = 2.5;
+        hub.position.z = 3;
         hub.userData.name = 'hub';
         nacelleGroup.add(hub);
 
-        // Blade Group (ใบกังหัน)
+        // === BLADE GROUP (ใบกังหัน) ===
         const bladeGroup = new THREE.Group();
-        bladeGroup.position.z = 2.5;
+        bladeGroup.position.z = 3;
         nacelleGroup.add(bladeGroup);
 
-        // Create 3 Blades
-        const bladeCount = 3;
         const blades = [];
+        const bladeCount = 3;
         for (let i = 0; i < bladeCount; i++) {
-            const bladeGeometry = new THREE.BoxGeometry(1.2, 0.3, 7);
+            const bladeGeometry = new THREE.BoxGeometry(2.5, 0.4, 10);
             const bladeMaterial = new THREE.MeshStandardMaterial({
-                color: 0xff6b9d,
-                metalness: 0.4,
-                roughness: 0.6,
+                color: 0xffffff,
+                metalness: 0.5,
+                roughness: 0.4,
                 side: THREE.DoubleSide
             });
             const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
@@ -219,28 +244,51 @@
             blades.push(blade);
         }
 
-        // Generator (เครื่องกำเนิด)
-        const generatorGeometry = new THREE.CylinderGeometry(0.7, 0.7, 2, 32);
-        const generatorMaterial = new THREE.MeshStandardMaterial({ color: 0x9c27b0, metalness: 0.5, roughness: 0.5 });
+        // === GENERATOR (เครื่องกำเนิด) ===
+        const generatorGeometry = new THREE.CylinderGeometry(0.8, 0.8, 2.5, 32);
+        const generatorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x9c27b0,
+            metalness: 0.6,
+            roughness: 0.4
+        });
         const generator = new THREE.Mesh(generatorGeometry, generatorMaterial);
         generator.castShadow = true;
         generator.receiveShadow = true;
         generator.rotation.z = Math.PI / 2;
-        generator.position.set(-2, 0, 2.5);
+        generator.position.set(-2, 0, 3);
         generator.userData.name = 'generator';
         nacelleGroup.add(generator);
 
-        // ============ Visualization Elements ============
+        // === WIND PARTICLES ===
+        const particleGeometry = new THREE.BufferGeometry();
+        const particleCount = 300;
+        const particles = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            particles[i] = Math.random() * 80 - 40;
+            particles[i + 1] = Math.random() * 40 - 5;
+            particles[i + 2] = Math.random() * 60 - 30;
+        }
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particles, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0x00aaff,
+            size: 0.15,
+            transparent: true,
+            opacity: 0.2
+        });
+        const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particleSystem);
+
+        // === FORCE ARROWS ===
         const arrowGroup = new THREE.Group();
         scene.add(arrowGroup);
 
         function createArrow(origin, direction, color, length = 3) {
             const dir = new THREE.Vector3(...direction).normalize();
-            const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(...origin), length, color, 0.5, 0.3);
+            const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(...origin), length, color, 0.6, 0.4);
             return arrow;
         }
 
-        // ============ Animation Control ============
+        // ============ CONTROL VARIABLES ============
         let isRotating = false;
         let isExploded = false;
         let showDynamics = false;
@@ -253,39 +301,41 @@
             blade: {
                 thName: 'ใบกังหัน',
                 enName: 'Blade',
-                thDesc: 'ใบกังหันมีลักษณะโค้งเพื่อรับแรงลมอย่างมีประสิทธิภาพ ตามหลักการแอโรไดนามิกส์ ใบกังหันได้รับแรงยก (Lift Force) ที่ทำให้เกิดการหมุน นอกจากนี้ยังได้รับแรงลาก (Drag Force) ซึ่งส่งผลต่อการรับแรงโดยรวม',
-                enDesc: 'The blade has a curved aerodynamic design to efficiently capture wind force. According to aerodynamics principles, the blade receives lift force causing rotation, and also experiences drag force affecting overall performance.'
+                thDesc: 'ใบกังหันมีลักษณะโค้งเพื่อรับแรงลมอย่างมีประสิทธิภาพตามหลักการแอโรไดนามิกส์ ใบกังหันได้รับแรงยก (Lift Force) ที่ทำให้เกิดการหมุน นอกจากนี้ยังได้รับแรงลาก (Drag Force) ซึ่งส่งผลต่อการรับแรงโดยรวม',
+                enName2: 'The blade has a curved aerodynamic design to efficiently capture wind force.'
             },
             hub: {
                 thName: 'แกนกลาง',
-                enName: 'Hub (Rotor Hub)',
+                enName: 'Hub',
                 thDesc: 'แกนกลางเป็นส่วนที่ติดต่อใบกังหันกับระบบถ่ายทำนาย เมื่อลมพัดทำให้ใบกังหันหมุน แกนกลางก็จะหมุนด้วย แรงบิด (Torque) จากการหมุนของใบกังหันจะถ่ายทำให้กับเครื่องกำเนิด',
-                enDesc: 'The hub connects the blades to the generator system. When wind causes the blades to rotate, the hub rotates as well, transmitting the rotational torque to the generator for electricity generation.'
+                enName2: 'The hub connects the blades to the generator system and transmits rotational torque.'
+            },
+            nacelle: {
+                thName: 'หัวกังหัน',
+                enName: 'Nacelle',
+                thDesc: 'หัวกังหันเป็นส่วนที่บรรจุเครื่องกำเนิด แกนกลาง และอุปกรณ์ควบคุมอื่นๆ หัวกังหันสามารถหมุนตามทิศทางลมเพื่อให้ได้ประสิทธิภาพสูงสุด',
+                enName2: 'The nacelle houses the generator and control systems, can rotate to face the wind.'
             },
             tower: {
                 thName: 'หอสูง',
                 enName: 'Tower',
                 thDesc: 'หอสูงทำหน้าที่รองรับน้ำหนักของหัวกังหัน แกนกลาง และใบกังหันทั้งหมด นอกจากนี้ยังต้องทนต่อแรงต่างๆ เช่น แรงลม แรงบิด และแรงเนื่องจากการหมุน หอสูงจึงมีความสำคัญต่อความคงตัวของกังหันลม',
-                enDesc: 'The tower supports the weight of the nacelle, hub, and blades. It must withstand various forces including wind, torque, and centrifugal forces from rotation. The tower is crucial for windmill stability.'
+                enName2: 'The tower supports the weight and withstands wind and rotational forces.'
             },
             generator: {
                 thName: 'เครื่องกำเนิด',
                 enName: 'Generator',
-                thDesc: 'เครื่องกำเนิดเป็นส่วนที่แปลงพลังงานกลจากการหมุนเป็นพลังงานไฟฟ้า เมื่อแกนกลางหมุน เครื่องกำเนิดจะหมุนด้วย และสร้างกระแสไฟฟ้าผ่านสนามแม่เหล็ก สิ่งนี้เป็นประยุกต์ของกฎการเหนี่ยวนำแม่เหล็กไฟฟ้า',
-                enDesc: 'The generator converts rotational mechanical energy into electrical energy. As the hub rotates, the generator spins and produces electricity through electromagnetic induction, applying Faraday\'s law of electromagnetic induction.'
+                thDesc: 'เครื่องกำเนิดเป็นส่วนที่แปลงพลังงานกลจากการหมุนเป็นพลังงานไฟฟ้า เมื่อแกนกลางหมุน เครื่องกำเนิดจะหมุนด้วย และสร้างกระแสไฟฟ้าผ่านสนามแม่เหล็ก',
+                enName2: 'The generator converts rotational mechanical energy into electrical energy.'
             }
         };
 
         function selectPart(partName) {
             selectedPart = partName;
             const info = partInfoData[partName];
-            
-            document.getElementById('partTitle').innerText = `${info.thName} (${info.enName})`;
-            document.getElementById('partDesc').innerText = `${info.thDesc}\n\n${info.enDesc}`;
-            
             currentTextToSpeak = `${info.thName} หรือภาษาอังกฤษเรียกว่า ${info.enName}. ${info.thDesc}`;
             
-            document.querySelectorAll('.part-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.part-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
             speakCurrentInfo();
@@ -293,18 +343,18 @@
 
         function toggleRotation() {
             isRotating = !isRotating;
-            targetRotationSpeed = isRotating ? 0.05 : 0;
-            document.getElementById('rotateBtn').innerText = isRotating ? '⏸️ หยุดหมุน (Stop)' : '▶️ หมุนกังหัน (Start)';
+            targetRotationSpeed = isRotating ? 0.08 : 0;
+            document.getElementById('rotateBtn').innerText = isRotating ? '⏸️ หยุด' : '▶️ หมุน';
         }
 
         function toggleExplode() {
             isExploded = !isExploded;
-            document.getElementById('explodeBtn').innerText = isExploded ? '🧩 ประกอบกลับ (Assemble)' : '💥 ถอดประกอบ (Explode)';
+            document.getElementById('explodeBtn').innerText = isExploded ? '🧩 ประกอบ' : '💥 ถอด';
         }
 
         function toggleDynamics() {
             showDynamics = !showDynamics;
-            document.getElementById('dynamicsBtn').innerText = showDynamics ? '✅ ซ่อนแรง (Hide Forces)' : '🎯 แสดงแรง (Show Forces)';
+            document.getElementById('dynamicsBtn').innerText = showDynamics ? '✅ ปิด' : '🎯 แรง';
         }
 
         function resetView() {
@@ -313,77 +363,86 @@
             showDynamics = false;
             rotationSpeed = 0;
             targetRotationSpeed = 0;
-            camera.position.set(0, 8, 15);
+            camera.position.set(0, 8, 18);
+            camera.lookAt(0, 5, 0);
             
-            document.getElementById('rotateBtn').innerText = '▶️ หมุนกังหัน (Start Rotation)';
-            document.getElementById('explodeBtn').innerText = '💥 ถอดประกอบ (Explode)';
-            document.getElementById('dynamicsBtn').innerText = '🎯 แสดงแรง (Show Forces)';
+            document.getElementById('rotateBtn').innerText = '▶️ หมุน';
+            document.getElementById('explodeBtn').innerText = '💥 ถอด';
+            document.getElementById('dynamicsBtn').innerText = '🎯 แรง';
+            document.querySelectorAll('.part-btn').forEach(btn => btn.classList.remove('active'));
         }
 
         function speakCurrentInfo() {
             if ('speechSynthesis' in window && currentTextToSpeak) {
                 window.speechSynthesis.cancel();
-                let utterance = new THREE.SpeechSynthesisUtterance(currentTextToSpeak);
+                let utterance = new SpeechSynthesisUtterance(currentTextToSpeak);
                 utterance.lang = 'th-TH';
-                utterance.rate = 0.9;
+                utterance.rate = 0.85;
                 window.speechSynthesis.speak(utterance);
             }
         }
 
-        // ============ Animation Loop ============
+        // Helper function to create texture
+        function createTexturePattern() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#cccccc';
+            ctx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 256; i += 32) {
+                ctx.strokeStyle = '#999999';
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, 256);
+                ctx.stroke();
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        // ============ ANIMATION LOOP ============
         function animate() {
             requestAnimationFrame(animate);
 
             // Update rotation speed
-            rotationSpeed += (targetRotationSpeed - rotationSpeed) * 0.1;
+            rotationSpeed += (targetRotationSpeed - rotationSpeed) * 0.08;
 
             // Rotate blades
             bladeGroup.rotation.z += rotationSpeed;
-
-            // Rotate generator
             generator.rotation.z += rotationSpeed;
 
             // Update wind particles
             const positions = particleSystem.geometry.attributes.position.array;
             for (let i = 0; i < positions.length; i += 3) {
-                positions[i] -= 0.1; // Move left (wind direction)
-                if (positions[i] < -25) positions[i] = 20;
+                positions[i] -= 0.12;
+                if (positions[i] < -50) positions[i] = 50;
             }
             particleSystem.geometry.attributes.position.needsUpdate = true;
 
             // Explode effect
             if (isExploded) {
-                nacelleGroup.position.z += (3 - nacelleGroup.position.z) * 0.1;
-                tower.position.y += (-3 - tower.position.y) * 0.1;
+                nacelleGroup.position.z += (5 - nacelleGroup.position.z) * 0.08;
+                tower.position.y += (2 - tower.position.y) * 0.08;
             } else {
-                nacelleGroup.position.z += (0 - nacelleGroup.position.z) * 0.1;
-                tower.position.y += (-1 - tower.position.y) * 0.1;
+                nacelleGroup.position.z += (0 - nacelleGroup.position.z) * 0.08;
+                tower.position.y += (3.5 - tower.position.y) * 0.08;
             }
 
             // Show dynamics arrows
             arrowGroup.clear();
             if (showDynamics && isRotating) {
-                // Wind force (red)
-                arrowGroup.add(createArrow([0, 6, -5], [1, 0, 0], 0xff0000, 4));
-                
-                // Lift force (blue)
-                arrowGroup.add(createArrow([0, 8, 0], [0, 1, 0], 0x0000ff, 3));
-                
-                // Drag force (orange)
-                arrowGroup.add(createArrow([0, 5, 0], [-0.5, 0, 0.5], 0xffa500, 2));
-                
-                // Torque/Rotation (green)
-                arrowGroup.add(createArrow([2, 6, 0], [0, 0, -1], 0x00ff00, 3));
+                arrowGroup.add(createArrow([0, 8, -8], [1, 0, 0], 0xff0000, 5));
+                arrowGroup.add(createArrow([0, 10, 3], [0, 1, -0.5], 0x0000ff, 4));
+                arrowGroup.add(createArrow([0, 5, 3], [-0.5, 0, 0.5], 0xffa500, 3));
+                arrowGroup.add(createArrow([2, 7.5, 3], [0, 0, -1], 0x00ff00, 3));
             }
 
-            // Update speed info
-            const rpm = Math.floor(rotationSpeed * 200);
-            document.getElementById('speedInfo').innerText = `⚡ ความเร็วในการหมุน: ${rpm} RPM | Wind Speed: ${Math.floor(rotationSpeed * 100)} %`;
-
-            // Camera control
-            camera.position.x = Math.sin(Date.now() * 0.0002) * 20;
-            camera.position.z = Math.cos(Date.now() * 0.0002) * 20;
-            camera.lookAt(windmillGroup.position);
+            // Smooth camera orbit
+            const time = Date.now() * 0.0001;
+            camera.position.x = Math.sin(time) * 18;
+            camera.position.z = Math.cos(time) * 18;
+            camera.lookAt(0, 5, 0);
 
             renderer.render(scene, camera);
         }
